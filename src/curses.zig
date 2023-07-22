@@ -4,7 +4,6 @@ const c = @cImport({
     @cInclude("curses.h");
 });
 
-
 const Error = error.CursesError;
 
 fn checkError(res: c_int) !c_int {
@@ -19,7 +18,6 @@ pub const KEY_LEFT: c_int = c.KEY_LEFT;
 pub const KEY_RIGHT: c_int = c.KEY_RIGHT;
 pub const KEY_UP: c_int = c.KEY_UP;
 pub const KEY_DOWN: c_int = c.KEY_DOWN;
-
 
 pub const Window = struct {
     win: *c.WINDOW,
@@ -40,23 +38,34 @@ pub const Window = struct {
     }
 
     // TODO: don't use "legacy" functions like getmaxy()?
-    pub fn getmaxy(self: Window) u16 { return @intCast(u16, c.getmaxy(self.win)); }
-    pub fn getmaxx(self: Window) u16 { return @intCast(u16, c.getmaxx(self.win)); }
+    pub fn getmaxy(self: Window) u16 {
+        return c.getmaxy(self.win);
+    }
+    pub fn getmaxx(self: Window) u16 {
+        return c.getmaxx(self.win);
+    }
 
-    pub fn attron(self: Window, attr: c_int) !void { _ = try checkError(c.wattron(self.win, attr)); }
-    pub fn attroff(self: Window, attr: c_int) !void { _ = try checkError(c.wattroff(self.win, attr)); }
+    pub fn attron(self: Window, attr: c_int) !void {
+        _ = try checkError(c.wattron(self.win, attr));
+    }
+    pub fn attroff(self: Window, attr: c_int) !void {
+        _ = try checkError(c.wattroff(self.win, attr));
+    }
 
-    pub fn keypad(self: Window, bf: bool) !c_int { return checkError(c.keypad(self.win, bf)); }
+    pub fn keypad(self: Window, bf: bool) !c_int {
+        return checkError(c.keypad(self.win, bf));
+    }
 
-    pub fn getch(self: Window) !c_int { return checkError(c.wgetch(self.win)); }
+    pub fn getch(self: Window) !c_int {
+        return checkError(c.wgetch(self.win));
+    }
 };
 
 pub const A_STANDOUT = c.MY_A_STANDOUT;
 
-
 pub fn initscr(allocator: std.mem.Allocator) !Window {
     const res = c.initscr();
-    if (@ptrToInt(res) == 0) {
+    if (@intFromPtr(res) == 0) {
         return Error;
     }
     return Window{ .win = res, .allocator = allocator };
@@ -70,7 +79,6 @@ pub fn curs_set(visibility: c_int) !c_int {
     return try checkError(c.curs_set(visibility));
 }
 
-
 pub fn has_colors() bool {
     return c.has_colors();
 }
@@ -80,7 +88,7 @@ pub fn start_color() !void {
 }
 
 const color_pair_attrs = [_]c_int{
-    -1,                 // 0 doesn't seem to be a valid color pair number, curses returns ERR for it
+    -1, // 0 doesn't seem to be a valid color pair number, curses returns ERR for it
     c.MY_COLOR_PAIR_1,
     c.MY_COLOR_PAIR_2,
     c.MY_COLOR_PAIR_3,
@@ -97,13 +105,13 @@ pub const ColorPair = struct {
     id: c_short,
 
     pub fn init(id: c_short, front: c_short, back: c_short) !ColorPair {
-        std.debug.assert(1 <= id and id < @intCast(c_short, color_pair_attrs.len));
+        std.debug.assert(1 <= id and id < color_pair_attrs.len);
         _ = try checkError(c.init_pair(id, front, back));
         return ColorPair{ .id = id };
     }
 
     pub fn attr(self: ColorPair) c_int {
-        return color_pair_attrs[@intCast(usize, self.id)];
+        return color_pair_attrs[self.id];
     }
 };
 

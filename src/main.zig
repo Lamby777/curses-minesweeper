@@ -6,7 +6,6 @@ const curses = @import("curses.zig");
 const cursesui = @import("cursesui.zig");
 const help = @import("help.zig");
 
-
 pub fn main() anyerror!void {
     const allocator = std.heap.c_allocator;
 
@@ -27,7 +26,7 @@ pub fn main() anyerror!void {
     var endwin_called: bool = false;
     defer {
         if (!endwin_called) {
-            curses.endwin() catch {};    // failures are ignored because not much can be done to them
+            curses.endwin() catch {}; // failures are ignored because not much can be done to them
         }
     }
 
@@ -42,7 +41,7 @@ pub fn main() anyerror!void {
     }
 
     // FIXME: the help doesn't fit in 80x24 terminal
-    const key_bindings = comptime[_]help.KeyBinding{
+    const key_bindings = comptime [_]help.KeyBinding{
         help.KeyBinding{ .key = "q", .help = "quit the game" },
         help.KeyBinding{ .key = "h", .help = "show this help" },
         help.KeyBinding{ .key = "n", .help = "new game" },

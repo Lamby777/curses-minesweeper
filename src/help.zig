@@ -1,7 +1,6 @@
 const std = @import("std");
 const curses = @import("curses.zig");
 
-
 pub const KeyBinding = struct { key: []const u8, help: []const u8 };
 
 const Wrapper = struct {
@@ -22,14 +21,13 @@ const Wrapper = struct {
         }
 
         if (self.s.len > line.len and (self.s[line.len] == '\n' or self.s[line.len] == ' ')) {
-            self.s = self.s[line.len+1..];
+            self.s = self.s[line.len + 1 ..];
         } else {
             self.s = self.s[line.len..];
         }
         return line;
     }
 };
-
 
 // if you modify this, make sure that it fits on an 80x24 standard-sized terminal!
 const text_with_single_newlines =
@@ -45,7 +43,7 @@ const text_with_single_newlines =
     \\Flagging the mines can make playing the game a lot easier. For example, if you have opened a
     \\square and it shows the number 3, and you have flagged exactly 3 of its neighbors, then you
     \\can open all other neighbors because they can't contain mines. This is how the "d" key works.
-    ;
+;
 
 // does nothing to \n\n repeated, but replaces single \n with spaces
 fn removeSingleNewlines(s: []const u8, allocator: std.mem.Allocator) ![]u8 {
@@ -54,7 +52,7 @@ fn removeSingleNewlines(s: []const u8, allocator: std.mem.Allocator) ![]u8 {
 
     var i: usize = 0;
     while (i < s.len) {
-        if (i+1 < s.len and s[i] == '\n' and s[i+1] == '\n') {
+        if (i + 1 < s.len and s[i] == '\n' and s[i + 1] == '\n') {
             try result.append('\n');
             try result.append('\n');
             i += 2;
@@ -81,7 +79,7 @@ fn drawText(window: curses.Window, key_bindings: []const KeyBinding, allocator: 
 
     var maxlen: u16 = 0;
     for (key_bindings) |kb| {
-        maxlen = std.math.max(maxlen, @intCast(u16, kb.key.len));
+        maxlen = std.math.max(maxlen, kb.key.len);
     }
 
     var y: u16 = 0;
@@ -113,8 +111,8 @@ fn drawText(window: curses.Window, key_bindings: []const KeyBinding, allocator: 
 // returns true if ok, false if help message didn't fit on the terminal
 pub fn show(window: curses.Window, key_bindings: []const KeyBinding, allocator: std.mem.Allocator) !bool {
     while (true) {
-        drawText(window, key_bindings, allocator) catch |err| switch(err) {
-            error.TerminalIsTooSmall => return false,     // it might be playable even if help doesn't fit
+        drawText(window, key_bindings, allocator) catch |err| switch (err) {
+            error.TerminalIsTooSmall => return false, // it might be playable even if help doesn't fit
             else => return err,
         };
         switch (try window.getch()) {

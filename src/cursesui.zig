@@ -2,21 +2,20 @@ const std = @import("std");
 const curses = @import("curses.zig");
 const core = @import("core.zig");
 
-
 pub const Characters = struct {
-    horiz_line: []const u8,         // -
-    vert_line: []const u8,          // |
-    crossing_up: []const u8,        // _|_
-    crossing_down: []const u8,      // T
-    crossing_left: []const u8,      // --|
-    crossing_right: []const u8,     // |--
-    crossing_plus: []const u8,      // --|--
-    corner_topleft: []const u8,     // ,--
-    corner_topright: []const u8,    // --.
-    corner_bottomleft: []const u8,  // |__
+    horiz_line: []const u8, // -
+    vert_line: []const u8, // |
+    crossing_up: []const u8, // _|_
+    crossing_down: []const u8, // T
+    crossing_left: []const u8, // --|
+    crossing_right: []const u8, // |--
+    crossing_plus: []const u8, // --|--
+    corner_topleft: []const u8, // ,--
+    corner_topright: []const u8, // --.
+    corner_bottomleft: []const u8, // |__
     corner_bottomright: []const u8, // __|
-    flag: []const u8,               // F
-    mine: []const u8,               // *
+    flag: []const u8, // F
+    mine: []const u8, // *
 };
 
 pub const ascii_characters = Characters{
@@ -36,21 +35,20 @@ pub const ascii_characters = Characters{
 };
 
 pub const unicode_characters = Characters{
-    .horiz_line = "\xe2\x94\x80",           // BOX DRAWINGS LIGHT HORIZONTAL
-    .vert_line = "\xe2\x94\x82",            // BOX DRAWINGS LIGHT VERTICAL
-    .crossing_up = "\xe2\x94\xb4",          // BOX DRAWINGS LIGHT UP AND HORIZONTAL
-    .crossing_down = "\xe2\x94\xac",        // BOX DRAWINGS LIGHT DOWN AND HORIZONTAL
-    .crossing_left = "\xe2\x94\xa4",        // BOX DRAWINGS LIGHT VERTICAL AND LEFT
-    .crossing_right = "\xe2\x94\x9c",       // BOX DRAWINGS LIGHT VERTICAL AND RIGHT
-    .crossing_plus = "\xe2\x94\xbc",        // BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL
-    .corner_topleft = "\xe2\x95\xad",       // BOX DRAWINGS LIGHT ARC DOWN AND RIGHT
-    .corner_topright = "\xe2\x95\xae",      // BOX DRAWINGS LIGHT ARC DOWN AND LEFT
-    .corner_bottomleft = "\xe2\x95\xb0",    // BOX DRAWINGS LIGHT ARC UP AND RIGHT
-    .corner_bottomright = "\xe2\x95\xaf",   // BOX DRAWINGS LIGHT ARC UP AND LEFT
-    .flag = "\xe2\x9a\x91",                 // BLACK FLAG
-    .mine = "\xe2\x88\x97",                 // ASTERISK OPERATOR
+    .horiz_line = "\xe2\x94\x80", // BOX DRAWINGS LIGHT HORIZONTAL
+    .vert_line = "\xe2\x94\x82", // BOX DRAWINGS LIGHT VERTICAL
+    .crossing_up = "\xe2\x94\xb4", // BOX DRAWINGS LIGHT UP AND HORIZONTAL
+    .crossing_down = "\xe2\x94\xac", // BOX DRAWINGS LIGHT DOWN AND HORIZONTAL
+    .crossing_left = "\xe2\x94\xa4", // BOX DRAWINGS LIGHT VERTICAL AND LEFT
+    .crossing_right = "\xe2\x94\x9c", // BOX DRAWINGS LIGHT VERTICAL AND RIGHT
+    .crossing_plus = "\xe2\x94\xbc", // BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL
+    .corner_topleft = "\xe2\x95\xad", // BOX DRAWINGS LIGHT ARC DOWN AND RIGHT
+    .corner_topright = "\xe2\x95\xae", // BOX DRAWINGS LIGHT ARC DOWN AND LEFT
+    .corner_bottomleft = "\xe2\x95\xb0", // BOX DRAWINGS LIGHT ARC UP AND RIGHT
+    .corner_bottomright = "\xe2\x95\xaf", // BOX DRAWINGS LIGHT ARC UP AND LEFT
+    .flag = "\xe2\x9a\x91", // BLACK FLAG
+    .mine = "\xe2\x88\x97", // ASTERISK OPERATOR
 };
-
 
 pub const Ui = struct {
     selected_x: u8,
@@ -59,7 +57,7 @@ pub const Ui = struct {
     window: curses.Window,
     chars: Characters,
     colors: bool,
-    number_attrs: [9]c_int,  // for coloring the numbers that show how many mines are around
+    number_attrs: [9]c_int, // for coloring the numbers that show how many mines are around
     status_message: ?[]const u8,
 
     pub fn init(game: *core.Game, window: curses.Window, characters: Characters, want_color: bool) !Ui {
@@ -86,7 +84,7 @@ pub const Ui = struct {
         }
 
         try curses.start_color();
-        const colors = comptime[_]c_short{
+        const colors = comptime [_]c_short{
             curses.COLOR_BLUE,
             curses.COLOR_GREEN,
             curses.COLOR_YELLOW,
@@ -98,14 +96,18 @@ pub const Ui = struct {
             curses.COLOR_MAGENTA,
         };
         std.debug.assert(colors.len == self.number_attrs.len);
-        for (colors) |color, i| {
-            const pair = try curses.ColorPair.init(@intCast(c_short, i+1), color, curses.COLOR_BLACK);
+        for (colors, 0..) |color, i| {
+            const pair = try curses.ColorPair.init(i + 1, color, curses.COLOR_BLACK);
             self.number_attrs[i] = pair.attr();
         }
     }
 
-    fn getWidth(self: *const Ui) u16 { return (self.game.width * @intCast(u16, "|---".len)) + @intCast(u16, "|".len); }
-    fn getHeight(self: *const Ui) u16 { return (self.game.height * 2) + 1; }
+    fn getWidth(self: *const Ui) u16 {
+        return (self.game.width * "|---".len) + "|".len;
+    }
+    fn getHeight(self: *const Ui) u16 {
+        return (self.game.height * 2) + 1;
+    }
 
     fn drawLine(self: *const Ui, y: u16, xleft: u16, left: []const u8, mid: []const u8, right: []const u8, horiz: []const u8) !void {
         var x: u16 = xleft;
@@ -131,13 +133,9 @@ pub const Ui = struct {
         var y: u16 = top;
         while (gamey < self.game.height) : (gamey += 1) {
             if (gamey == 0) {
-                try self.drawLine(y, left,
-                    self.chars.corner_topleft, self.chars.crossing_down, self.chars.corner_topright,
-                    self.chars.horiz_line);
+                try self.drawLine(y, left, self.chars.corner_topleft, self.chars.crossing_down, self.chars.corner_topright, self.chars.horiz_line);
             } else {
-                try self.drawLine(y, left,
-                    self.chars.crossing_right, self.chars.crossing_plus, self.chars.crossing_left,
-                    self.chars.horiz_line);
+                try self.drawLine(y, left, self.chars.crossing_right, self.chars.crossing_plus, self.chars.crossing_left, self.chars.horiz_line);
             }
             y += 1;
 
@@ -154,9 +152,8 @@ pub const Ui = struct {
                 var msg2: []const u8 = "";
                 const numbers = "012345678";
 
-                if ((self.game.status == core.GameStatus.PLAY and info.opened)
-                 or (self.game.status != core.GameStatus.PLAY and !info.mine)) {
-                    msg1 = numbers[info.n_mines_around..info.n_mines_around+1];
+                if ((self.game.status == core.GameStatus.PLAY and info.opened) or (self.game.status != core.GameStatus.PLAY and !info.mine)) {
+                    msg1 = numbers[info.n_mines_around .. info.n_mines_around + 1];
                     attrs |= self.number_attrs[info.n_mines_around];
                 } else if (self.game.status == core.GameStatus.PLAY) {
                     if (info.flagged) {
@@ -174,7 +171,7 @@ pub const Ui = struct {
 
                 try self.window.attron(attrs);
                 {
-                    try self.window.mvaddstr(y, x, "   ");  // make sure that all 3 character places get attrs
+                    try self.window.mvaddstr(y, x, "   "); // make sure that all 3 character places get attrs
                     x += 1;
                     try self.window.mvaddstr(y, x, msg1);
                     x += 1;
@@ -187,9 +184,7 @@ pub const Ui = struct {
             y += 1;
         }
 
-        try self.drawLine(y, left,
-            self.chars.corner_bottomleft, self.chars.crossing_up, self.chars.corner_bottomright,
-            self.chars.horiz_line);
+        try self.drawLine(y, left, self.chars.corner_bottomleft, self.chars.crossing_up, self.chars.corner_bottomright, self.chars.horiz_line);
     }
 
     pub fn setStatusMessage(self: *Ui, msg: []const u8) void {
@@ -199,7 +194,7 @@ pub const Ui = struct {
     // this may overlap the grid on a small terminal, it doesn't matter
     fn drawStatusText(self: *const Ui, msg: []const u8) !void {
         try self.window.attron(curses.A_STANDOUT);
-        try self.window.mvaddstr(self.window.getmaxy()-1, 0, msg);
+        try self.window.mvaddstr(self.window.getmaxy() - 1, 0, msg);
         try self.window.attroff(curses.A_STANDOUT);
     }
 
@@ -207,7 +202,7 @@ pub const Ui = struct {
         try self.drawGrid();
 
         if (self.status_message == null) {
-            switch(self.game.status) {
+            switch (self.game.status) {
                 core.GameStatus.PLAY => {},
                 core.GameStatus.WIN => self.setStatusMessage("You won! :D Press n to play again."),
                 core.GameStatus.LOSE => self.setStatusMessage("Game Over :( Press n to play again."),
@@ -232,21 +227,37 @@ pub const Ui = struct {
 
     pub fn moveSelection(self: *Ui, xdiff: i8, ydiff: i8) void {
         switch (xdiff) {
-            1 => if (self.selected_x != self.game.width-1) { self.selected_x += 1; },
-            -1 => if (self.selected_x != 0) { self.selected_x -= 1; },
+            1 => if (self.selected_x != self.game.width - 1) {
+                self.selected_x += 1;
+            },
+            -1 => if (self.selected_x != 0) {
+                self.selected_x -= 1;
+            },
             0 => {},
             else => unreachable,
         }
-        switch(ydiff) {
-            1 => if (self.selected_y != self.game.height-1) { self.selected_y += 1; },
-            -1 => if (self.selected_y != 0) { self.selected_y -= 1; },
+        switch (ydiff) {
+            1 => if (self.selected_y != self.game.height - 1) {
+                self.selected_y += 1;
+            },
+            -1 => if (self.selected_y != 0) {
+                self.selected_y -= 1;
+            },
             0 => {},
             else => unreachable,
         }
     }
 
-    pub fn openSelected(self: *const Ui) void { self.game.open(self.selected_x, self.selected_y); }
-    pub fn toggleFlagSelected(self: *const Ui) void { self.game.toggleFlag(self.selected_x, self.selected_y); }
-    pub fn openAroundIfSafe(self: *const Ui) void { self.game.openAroundIfSafe(self.selected_x, self.selected_y); }
-    pub fn openAroundEverythingSafe(self: *const Ui) void { self.game.openAroundEverythingSafe(); }
+    pub fn openSelected(self: *const Ui) void {
+        self.game.open(self.selected_x, self.selected_y);
+    }
+    pub fn toggleFlagSelected(self: *const Ui) void {
+        self.game.toggleFlag(self.selected_x, self.selected_y);
+    }
+    pub fn openAroundIfSafe(self: *const Ui) void {
+        self.game.openAroundIfSafe(self.selected_x, self.selected_y);
+    }
+    pub fn openAroundEverythingSafe(self: *const Ui) void {
+        self.game.openAroundEverythingSafe();
+    }
 };

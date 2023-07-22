@@ -2,7 +2,6 @@ const std = @import("std");
 const clap = @import("zig-clap");
 const cursesui = @import("cursesui.zig");
 
-
 pub const Args = struct {
     width: u8,
     height: u8,
@@ -14,14 +13,14 @@ pub const Args = struct {
 fn parseSize(str: []const u8, width: *u8, height: *u8) !void {
     const i = std.mem.indexOfScalar(u8, str, 'x') orelse return error.CantFindTheX;
     width.* = try std.fmt.parseUnsigned(u8, str[0..i], 10);
-    height.* = try std.fmt.parseUnsigned(u8, str[i+1..], 10);
+    height.* = try std.fmt.parseUnsigned(u8, str[i + 1 ..], 10);
     if (width.* == 0 or height.* == 0) {
         return error.MustNotBeZero;
     }
 }
 
 pub fn parse() !Args {
-    const params = comptime [_]clap.Param(clap.Help) {
+    const params = comptime [_]clap.Param(clap.Help){
         clap.parseParam("-h, --help                 Display this help and exit") catch unreachable,
         clap.parseParam("-s, --size <STR>           How big to make minesweeper, e.g. 15x15") catch unreachable,
         clap.parseParam("-n, --mine-count <NUM>     How many mines") catch unreachable,
@@ -45,17 +44,13 @@ pub fn parse() !Args {
     };
 
     if (args.flag("--help")) {
-        try std.io.getStdErr().writer().print(
-            "Usage: {s} [options]\n\nOptions:\n",
-            .{ std.process.args().nextPosix().? });
+        try std.io.getStdErr().writer().print("Usage: {s} [options]\n\nOptions:\n", .{std.process.args().nextPosix().?});
         try clap.help(std.io.getStdErr().writer(), params[0..]);
         std.os.exit(0);
     }
     if (args.option("--size")) |size| {
         parseSize(size, &result.width, &result.height) catch {
-            try std.io.getStdErr().writer().print(
-                "{s}: invalid minesweeper size \"{s}\"",
-                .{ std.process.args().nextPosix().?, size });
+            try std.io.getStdErr().writer().print("{s}: invalid minesweeper size \"{s}\"", .{ std.process.args().nextPosix().?, size });
             std.os.exit(2);
         };
     }
@@ -69,10 +64,8 @@ pub fn parse() !Args {
         result.color = false;
     }
 
-    if (result.nmines >= @intCast(u16, result.width) * @intCast(u16, result.height)) {
-        try std.io.getStdErr().writer().print(
-            "{s}: there must be less mines than places for mines\n",
-            .{ std.process.args().nextPosix().? });
+    if (result.nmines >= result.width * result.height) {
+        try std.io.getStdErr().writer().print("{s}: there must be less mines than places for mines\n", .{std.process.args().nextPosix().?});
         std.os.exit(2);
     }
 

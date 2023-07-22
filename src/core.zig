@@ -1,6 +1,5 @@
 const std = @import("std");
 
-
 const Square = struct {
     opened: bool,
     mine: bool,
@@ -30,7 +29,7 @@ pub const Game = struct {
         // in the beginning, there are width*height squares, but the mines are
         // added when the user has already opened one of them, otherwise the
         // first square that the user opens could be a mine
-        std.debug.assert(@intCast(u16, width)*@intCast(u16, height) - 1 >= nmines);
+        std.debug.assert((width * height) - 1 >= nmines);
 
         const map = try allocator.alloc([]Square, height);
         var nalloced: u8 = 0;
@@ -73,22 +72,22 @@ pub const Game = struct {
 
     fn getNeighbors(self: Game, x: u8, y: u8, res: [][2]u8) [][2]u8 {
         const neighbors = [_][2]i16{
-            [2]i16{@intCast(i16, x)-1, @intCast(i16, y)-1},
-            [2]i16{@intCast(i16, x)-1, @intCast(i16, y)  },
-            [2]i16{@intCast(i16, x)-1, @intCast(i16, y)+1},
-            [2]i16{@intCast(i16, x),   @intCast(i16, y)+1},
-            [2]i16{@intCast(i16, x)+1, @intCast(i16, y)+1},
-            [2]i16{@intCast(i16, x)+1, @intCast(i16, y)  },
-            [2]i16{@intCast(i16, x)+1, @intCast(i16, y)-1},
-            [2]i16{@intCast(i16, x),   @intCast(i16, y)-1},
+            [2]i16{ x - 1, y - 1 },
+            [2]i16{ x - 1, y },
+            [2]i16{ x - 1, y + 1 },
+            [2]i16{ x, y + 1 },
+            [2]i16{ x + 1, y + 1 },
+            [2]i16{ x + 1, y },
+            [2]i16{ x + 1, y - 1 },
+            [2]i16{ x, y - 1 },
         };
         var i: u8 = 0;
 
         for (neighbors) |neighbor| {
             const nx_signed = neighbor[0];
             const ny_signed = neighbor[1];
-            if (0 <= nx_signed and nx_signed < @intCast(i16, self.width) and 0 <= ny_signed and ny_signed < @intCast(i16, self.height)) {
-                res[i] = [2]u8{ @intCast(u8, nx_signed), @intCast(u8, ny_signed) };
+            if (0 <= nx_signed and nx_signed < self.width and 0 <= ny_signed and ny_signed < self.height) {
+                res[i] = [2]u8{ nx_signed, ny_signed };
                 i += 1;
             }
         }
@@ -182,7 +181,7 @@ pub const Game = struct {
         switch (self.status) {
             GameStatus.PLAY => {},
             GameStatus.LOSE => return,
-            GameStatus.WIN => unreachable,    // openRecurser shouldn't set this status
+            GameStatus.WIN => unreachable, // openRecurser shouldn't set this status
         }
 
         // try to find a non-mine, non-opened square
@@ -259,7 +258,6 @@ pub const Game = struct {
         self.map[y][x].flagged = !self.map[y][x].flagged;
     }
 };
-
 
 test "init deinit open getSquareInfo" {
     const allocator = std.debug.global_allocator;
